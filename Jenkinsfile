@@ -6,42 +6,41 @@ def dockerRegistry=""
 def registryCredentials="dockerhub"
 
 pipeline {
-	agent {
-		label 'agent'
-	}
+        agent {
+                label 'agent'
+        }
 
-	tools {
-		terraform 'Terraform'
-	}
+        tools {
+                terraform 'Terraform'
+        }
 
-	stages{
-		stage('Get Code') {
-			steps {
-				checkout scm
-				}
-			}
-	
-		stage('Clean running cont') {
-			steps {
-				sh "docker rm -f frontend backend"
-				}
-			}
-		}
+        stages{
+                stage('Get Code') {
+                        steps {
+                                checkout scm
+                                }
+                        }
 
-		stage('Adjust version') {
-			steps {
-				script {
-					backendDockerTag = params.backendDockerTag.isEmpty() ? "latest" : params.backendDockerTag
-					frontendDockerTag = params.frontendDockerTag.isEmpty() ? "latest" : params.frontendDockerTag
-					currentBuild.description = "Backend: ${backendDockerTag}, Frontend: ${frontendDockerTag}"
-					}
-				}
-			}
+                stage('Clean running cont') {
+                        steps {
+                                sh "docker rm -f frontend backend"
+                                }
+                        }
+                }
 
+                stage('Adjust version') {
+                        steps {
+                                script {
+                                        backendDockerTag = params.backendDockerTag.isEmpty() ? "latest" : params.backendDockerTag
+                                        frontendDockerTag = params.frontendDockerTag.isEmpty() ? "latest" : params.frontendDockerTag
+                                        currentBuild.description = "Backend: ${backendDockerTag}, Frontend: ${frontendDockerTag}"
+                                        }
+                                }
+                        }
         stage('Deploy application') {
             steps {
                 script {
-                    withEnv(["FRONTEND_IMAGE=$frontendImage:$frontendDockerTag", 
+                    withEnv(["FRONTEND_IMAGE=$frontendImage:$frontendDockerTag",
                              "BACKEND_IMAGE=$backendImage:$backendDockerTag"]) {
                        docker.withRegistry("$dockerRegistry", "$registryCredentials") {
                             sh "docker-compose up -d"
@@ -50,13 +49,11 @@ pipeline {
                 }
             }
         }
-	stage('Selenium tests') {
-		steps {
-			sh "pip3 install -r test/selenium/requirements.txt"
-			sh "python3 -m pytest test/selenium/frontendTest.py"
-		}
-	}
-	
-	}	
-}
+        stage('Selenium tests') {
+                steps {
+                        sh "pip3 install -r test/selenium/requirements.txt"
+                        sh "python3 -m pytest test/selenium/frontendTest.py"
+                }
+        }
+
 }
